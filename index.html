@@ -1,0 +1,503 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Alexander Nevrozov — Python / Backend / ML</title>
+<meta name="description" content="Alexander Nevrozov — Python developer building anomaly detectors and end-to-end products across backend, ML and data.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700;800&family=Spectral:ital,wght@0,400;0,500;1,400;1,500&family=Spline+Sans+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  /* ============ TOKENS ============ */
+  :root{
+    --paper:#eaece7; --paper-raised:#f3f4ef;
+    --ink:#191d1b; --ink-soft:#535a54; --faint:#8b918a;
+    --rule:rgba(25,29,27,.11); --rule-strong:rgba(25,29,27,.22);
+    --signal:#bf842a; --signal-soft:rgba(191,132,42,.14);
+    --sans:"Hanken Grotesk",system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+    --serif:"Spectral",Georgia,"Times New Roman",serif;
+    --mono:"Spline Sans Mono",ui-monospace,Menlo,Consolas,monospace;
+    --maxw:1080px;
+    color-scheme:light;
+  }
+  @media (prefers-color-scheme:dark){
+    :root{
+      --paper:#131719; --paper-raised:#191e20;
+      --ink:#e7eae4; --ink-soft:#9aa39b; --faint:#69726b;
+      --rule:rgba(231,234,228,.13); --rule-strong:rgba(231,234,228,.24);
+      --signal:#d9a441; --signal-soft:rgba(217,164,65,.16);
+      color-scheme:dark;
+    }
+  }
+  :root[data-theme="light"]{
+    --paper:#eaece7; --paper-raised:#f3f4ef;
+    --ink:#191d1b; --ink-soft:#535a54; --faint:#8b918a;
+    --rule:rgba(25,29,27,.11); --rule-strong:rgba(25,29,27,.22);
+    --signal:#bf842a; --signal-soft:rgba(191,132,42,.14); color-scheme:light;
+  }
+  :root[data-theme="dark"]{
+    --paper:#131719; --paper-raised:#191e20;
+    --ink:#e7eae4; --ink-soft:#9aa39b; --faint:#69726b;
+    --rule:rgba(231,234,228,.13); --rule-strong:rgba(231,234,228,.24);
+    --signal:#d9a441; --signal-soft:rgba(217,164,65,.16); color-scheme:dark;
+  }
+
+  @property --pgrow{ syntax:'<number>'; inherits:false; initial-value:0; }
+
+  /* ============ BASE ============ */
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  @media (prefers-reduced-motion:reduce){ html{scroll-behavior:auto} }
+  body{
+    margin:0; background:var(--paper); color:var(--ink);
+    font-family:var(--sans); font-size:17px; line-height:1.65; font-weight:400;
+    -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;
+    transition:background .5s ease, color .5s ease;
+  }
+  a{color:inherit}
+  ::selection{background:var(--signal-soft)}
+  .wrap{max-width:var(--maxw); margin:0 auto; padding:0 clamp(20px,5vw,64px)}
+
+  /* view-transition crossfade for language swap */
+  ::view-transition-old(root),::view-transition-new(root){animation-duration:.5s}
+
+  /* scroll progress */
+  .progress{position:fixed; inset:0 0 auto 0; height:2px; background:var(--signal);
+    transform-origin:0 50%; transform:scaleX(0); z-index:50}
+  @supports (animation-timeline:scroll()){
+    .progress{animation:pgrow linear both; animation-timeline:scroll(root block)}
+    @keyframes pgrow{ to{ transform:scaleX(1) } }
+  }
+  @media (prefers-reduced-motion:reduce){ .progress{display:none} }
+
+  /* tools */
+  .tools{position:fixed; top:16px; right:16px; z-index:60; display:flex; gap:8px}
+  .tbtn{font-family:var(--mono); font-size:11px; letter-spacing:.06em; color:var(--ink-soft);
+    background:color-mix(in srgb, var(--paper-raised) 82%, transparent);
+    border:1px solid var(--rule-strong); border-radius:999px; padding:7px 13px; cursor:pointer;
+    backdrop-filter:blur(6px); transition:color .2s, border-color .2s; min-width:64px; text-align:center}
+  .tbtn:hover{color:var(--ink); border-color:var(--ink-soft)}
+  .tbtn:focus-visible{outline:2px solid var(--signal); outline-offset:2px}
+
+  /* ============ HERO ============ */
+  header.hero{padding:clamp(74px,13vh,150px) 0 clamp(30px,5vh,60px)}
+  .eyebrow{font-family:var(--mono); font-size:12px; letter-spacing:.24em; text-transform:uppercase;
+    color:var(--faint); display:flex; align-items:center; gap:12px}
+  .eyebrow::after{content:""; flex:1; height:1px; background:var(--rule)}
+  h1.name{font-weight:800; font-size:clamp(2.3rem,7.4vw,5rem); line-height:.96;
+    letter-spacing:-.035em; margin:.28em 0 .16em; text-wrap:balance}
+  .thesis{font-family:var(--serif); font-style:italic; font-weight:400;
+    font-size:clamp(1.3rem,3.1vw,2rem); line-height:1.28; color:var(--ink);
+    max-width:21ch; margin:.1em 0 .5em; text-wrap:balance}
+  .lede{font-size:clamp(1rem,1.6vw,1.12rem); color:var(--ink-soft); max-width:54ch; margin:0}
+
+  .figure{margin:clamp(34px,6vh,64px) 0 0}
+  .fig-frame{position:relative; border-top:1px solid var(--rule); border-bottom:1px solid var(--rule);
+    background:repeating-linear-gradient(to bottom, transparent 0 39px, var(--rule) 39px 40px)}
+  .fig-frame::before{content:""; position:absolute; inset:0;
+    background:linear-gradient(90deg, var(--paper) 0, transparent 7%, transparent 93%, var(--paper) 100%);
+    pointer-events:none; z-index:2}
+  #sig{display:block; width:100%; height:240px}
+  .fig-cap{display:flex; gap:14px; align-items:baseline; margin-top:14px; flex-wrap:wrap}
+  .fig-cap .tag{font-family:var(--mono); font-size:11px; letter-spacing:.14em; text-transform:uppercase;
+    color:var(--signal); white-space:nowrap}
+  .fig-cap p{font-family:var(--serif); font-style:italic; font-size:1.02rem; color:var(--ink-soft);
+    margin:0; max-width:62ch}
+
+  /* ============ SECTIONS ============ */
+  section{padding:clamp(56px,10vh,120px) 0}
+  .shead{font-family:var(--mono); font-size:12px; letter-spacing:.22em; text-transform:uppercase;
+    color:var(--faint); display:flex; align-items:center; gap:14px; margin:0 0 clamp(28px,4vh,52px)}
+  .shead::after{content:""; flex:1; height:1px; background:var(--rule)}
+
+  .statement{font-size:clamp(1.35rem,2.9vw,1.95rem); line-height:1.42; font-weight:500;
+    letter-spacing:-.01em; max-width:28ch; text-wrap:balance}
+  .statement .q{color:var(--ink-soft); font-weight:400}
+  .statement em{font-family:var(--serif); font-style:italic; font-weight:400}
+
+  .flag{border:1px solid var(--rule-strong); border-radius:3px; background:var(--paper-raised);
+    padding:clamp(26px,4vw,44px)}
+  .flag .kick{font-family:var(--mono); font-size:11px; letter-spacing:.2em; text-transform:uppercase;
+    color:var(--signal); display:flex; gap:10px; align-items:center}
+  .flag .kick .dot{width:6px; height:6px; border-radius:50%; background:var(--signal)}
+  .flag h3{font-size:clamp(1.7rem,3.6vw,2.5rem); font-weight:700; letter-spacing:-.02em; margin:.4em 0 .1em}
+  .flag .subtitle{font-family:var(--serif); font-style:italic; font-size:clamp(1.05rem,1.9vw,1.32rem);
+    color:var(--ink-soft); margin:0 0 1.1em; max-width:36ch}
+  .flag p.body{font-size:1.04rem; color:var(--ink); max-width:66ch; margin:0}
+  .flag .result{display:flex; gap:12px; align-items:flex-start; margin-top:1.5em;
+    padding-top:1.3em; border-top:1px solid var(--rule)}
+  .flag .result .mk{color:var(--signal); font-size:1.1em; line-height:1.2}
+  .flag .result .txt{font-family:var(--mono); font-size:12.5px; line-height:1.7; color:var(--ink-soft); letter-spacing:.01em}
+  .flag .result .txt b{color:var(--ink); font-weight:500}
+  .flag .flink{display:inline-flex; align-items:center; gap:8px; margin-top:1.5em;
+    font-family:var(--mono); font-size:13px; color:var(--ink); text-decoration:none;
+    border-bottom:1px solid var(--rule-strong); padding-bottom:2px; width:max-content}
+  .flag .flink:hover{border-color:var(--signal); color:var(--signal)}
+  .flag .flink .ar{color:var(--signal)}
+
+  .grid{display:grid; grid-template-columns:repeat(2,1fr); gap:1px; background:var(--rule);
+    border:1px solid var(--rule); margin-top:28px}
+  .card{background:var(--paper); padding:clamp(22px,3vw,34px); display:flex; flex-direction:column; transition:background .3s}
+  .card:hover{background:var(--paper-raised)}
+  .card .cn{font-family:var(--mono); font-size:15px; font-weight:500; letter-spacing:-.01em;
+    display:flex; align-items:baseline; gap:10px}
+  .card .cn .idx{font-size:11px; color:var(--faint); letter-spacing:.1em}
+  .card .cl{font-family:var(--serif); font-style:italic; color:var(--ink-soft); font-size:1.06rem;
+    margin:.5em 0 .9em; line-height:1.35}
+  .card .cs{font-family:var(--mono); font-size:11px; color:var(--faint); letter-spacing:.03em;
+    line-height:1.7; margin-top:auto}
+  .card a.clink{margin-top:14px; font-family:var(--mono); font-size:12px; color:var(--ink-soft);
+    text-decoration:none; width:max-content; border-bottom:1px solid transparent; padding-bottom:2px}
+  .card a.clink:hover{color:var(--signal); border-color:var(--signal)}
+
+  .skills{display:grid; grid-template-columns:repeat(3,1fr); gap:clamp(24px,4vw,48px) clamp(28px,5vw,64px)}
+  .sk .lab{font-family:var(--mono); font-size:11px; letter-spacing:.14em; text-transform:uppercase;
+    color:var(--signal); padding-bottom:9px; margin-bottom:11px; border-bottom:1px solid var(--rule)}
+  .sk ul{list-style:none; margin:0; padding:0}
+  .sk li{font-size:.98rem; color:var(--ink-soft); padding:2.5px 0}
+  .sk li b{color:var(--ink); font-weight:500}
+
+  .contact{display:flex; flex-wrap:wrap; gap:clamp(20px,4vw,56px); align-items:baseline}
+  .contact .big{font-family:var(--serif); font-style:italic; font-size:clamp(1.4rem,3.4vw,2.3rem); letter-spacing:-.01em}
+  .contact a{text-decoration:none; border-bottom:1px solid var(--rule-strong); padding-bottom:2px; transition:border-color .2s, color .2s; word-break:break-word}
+  .contact a:hover{color:var(--signal); border-color:var(--signal)}
+  .cmeta{display:flex; flex-wrap:wrap; gap:6px 22px; margin-top:26px; font-family:var(--mono);
+    font-size:12px; letter-spacing:.02em; color:var(--ink-soft)}
+  .cmeta a{color:var(--ink-soft); text-decoration:none; border-bottom:1px solid var(--rule)}
+  .cmeta a:hover{color:var(--signal); border-color:var(--signal)}
+
+  footer{border-top:1px solid var(--rule); padding:34px 0 60px; display:flex; justify-content:space-between;
+    flex-wrap:wrap; gap:14px; font-family:var(--mono); font-size:11px; letter-spacing:.04em; color:var(--faint)}
+  footer button{font:inherit; color:var(--ink-soft); background:none; border:1px solid var(--rule-strong);
+    border-radius:999px; padding:6px 14px; cursor:pointer; letter-spacing:.06em}
+  footer button:hover{color:var(--signal); border-color:var(--signal)}
+
+  .reveal{opacity:0; transform:translateY(16px);
+    transition:opacity .85s cubic-bezier(.2,.65,.2,1), transform .85s cubic-bezier(.2,.65,.2,1)}
+  .reveal.in{opacity:1; transform:none}
+  @media (prefers-reduced-motion:reduce){ .reveal{opacity:1; transform:none; transition:none} }
+
+  @media (max-width:720px){
+    body{font-size:16px}
+    .grid,.skills{grid-template-columns:1fr}
+    .skills{gap:26px}
+    .tools{top:12px; right:12px}
+  }
+
+  @media print{
+    :root{--paper:#fff; --paper-raised:#fff; --ink:#111; --ink-soft:#333; --faint:#666;
+      --rule:rgba(0,0,0,.16); --rule-strong:rgba(0,0,0,.3); --signal:#9a6a15}
+    .tools,.progress,.figure,footer button{display:none !important}
+    body{font-size:11px}
+    header.hero{padding:0 0 14px}
+    section{padding:16px 0; break-inside:avoid}
+    .flag,.card{break-inside:avoid}
+    a{text-decoration:none}
+  }
+</style>
+</head>
+<body>
+<div class="progress" aria-hidden="true"></div>
+
+<div class="tools">
+  <button class="tbtn" id="langBtn" type="button" aria-label="Switch language">RU</button>
+  <button class="tbtn" id="themeBtn" type="button" aria-label="Toggle colour theme">◐ auto</button>
+</div>
+
+<div class="wrap">
+
+  <!-- ============ HERO ============ -->
+  <header class="hero">
+    <div class="eyebrow" data-i18n="eyebrow">Python · Backend / ML · Kyiv</div>
+    <h1 class="name" data-i18n="name">Alexander Nevrozov</h1>
+    <p class="thesis" data-i18n="thesis">I build detectors for things no one has a template for.</p>
+    <p class="lede" data-i18n="lede">End-to-end Python — from a research core to a deployed product. Backend, machine learning, and the statistics that keep a result honest.</p>
+
+    <div class="figure reveal">
+      <div class="fig-frame"><canvas id="sig" aria-hidden="true"></canvas></div>
+      <div class="fig-cap">
+        <span class="tag" data-i18n="figtag">live · coincidence detector</span>
+        <p data-i18n="figcap">Six instruments, mostly noise. When they move together it's a signal — a lone spike is ignored. This is the idea my pipeline runs on real data.</p>
+      </div>
+    </div>
+  </header>
+
+  <!-- ============ PROFILE ============ -->
+  <section id="profile">
+    <p class="statement reveal" data-i18n="statement">I take work from a research idea to something people can use — <span class="q">the backend, the interface, the deploy, and the <em>statistical validation</em> that decides whether the result was ever real.</span></p>
+  </section>
+
+  <!-- ============ SELECTED WORK ============ -->
+  <section id="work">
+    <h2 class="shead" data-i18n="work_h">Selected work</h2>
+
+    <div class="flag reveal">
+      <div class="kick"><span class="dot"></span><span data-i18n="flag_kick">Flagship · anomaly detection</span></div>
+      <h3>amsg-pipeline</h3>
+      <p class="subtitle" data-i18n="flag_sub">A telescope for signals that don't announce themselves.</p>
+      <p class="body" data-i18n="flag_body">A CPU-only Python pipeline that searches worldwide neutron-monitor data for moments when many independent instruments deviate together during quiet solar wind — assuming no template of the source, only its footprint. A null result becomes a calibrated upper limit by injecting known signals and measuring what would have been caught. It grew into a cross-network search across three unrelated physics — neutron monitors, INTERMAGNET magnetometers, and GNSS TEC — so a real candidate has to show up in all three at once, and false alarms die by multiplied rarity.</p>
+      <div class="result">
+        <span class="mk">◆</span>
+        <span class="txt" data-i18n="flag_res"><b>Two solar minima + two cross-network years scanned — all-zero, every real event attributed by name.</b> Validated on the GLE72 ground-level enhancement (2017) and Forbush decreases · ~15 modular CLI stages · 97 tests · connectors to NMDB, INTERMAGNET, CEDAR&nbsp;Madrigal, OMNI/HAPI, NOAA&nbsp;SWPC, USGS.</span>
+      </div>
+      <a class="flink" href="https://github.com/personalitytg/amsg-pipeline"><span class="ar">↳</span> github.com/personalitytg/amsg-pipeline</a>
+    </div>
+
+    <div class="grid reveal">
+      <article class="card">
+        <div class="cn"><span class="idx">01</span>pretraining-replay</div>
+        <p class="cl" data-i18n="c1_l">A scrubber through a 30M-parameter LLM's training, checkpoint by checkpoint.</p>
+        <p class="cs" data-i18n="c1_s">PyTorch · React 18 · TypeScript · scikit-learn · D3 · 227 checkpoints · 5 views</p>
+        <a class="clink" href="https://personalitytg.github.io/pretraining-replay" data-i18n="c1_k">↳ live demo</a>
+      </article>
+      <article class="card">
+        <div class="cn"><span class="idx">02</span>amsg-web</div>
+        <p class="cl" data-i18n="c2_l">A fullstack web platform over the AMSG scientific core.</p>
+        <p class="cs" data-i18n="c2_s">FastAPI · async jobs + SSE · React/TS · Plotly · Docker Compose · nginx</p>
+        <a class="clink" href="https://github.com/personalitytg/amsg-web" data-i18n="c2_k">↳ github</a>
+      </article>
+      <article class="card">
+        <div class="cn"><span class="idx">03</span>agent-kit</div>
+        <p class="cl" data-i18n="c3_l">Software projects run as a multi-agent pipeline, with the human as orchestrator.</p>
+        <p class="cs" data-i18n="c3_s">Claude Code · 6 subagents · slash-skills · guardrail hooks · MCP</p>
+        <a class="clink" href="https://github.com/personalitytg/agent-kit" data-i18n="c3_k">↳ github</a>
+      </article>
+      <article class="card">
+        <div class="cn"><span class="idx">04</span>phi-inverted-u-mlp</div>
+        <p class="cl" data-i18n="c4_l">Replicating the inverted-U curve from Integrated Information Theory.</p>
+        <p class="cs" data-i18n="c4_s">Python · PyTorch · MLP · Φ vs loss · Spearman correlation</p>
+        <a class="clink" href="https://github.com/personalitytg/phi-inverted-u-mlp" data-i18n="c4_k">↳ github</a>
+      </article>
+    </div>
+  </section>
+
+  <!-- ============ SKILLS ============ -->
+  <section id="skills">
+    <h2 class="shead" data-i18n="skills_h">What I work with</h2>
+    <div class="skills reveal">
+      <div class="sk"><div class="lab" data-i18n="sk_lang">Languages</div><ul>
+        <li data-i18n="sk_lang1"><b>Python</b> (primary)</li><li>TypeScript / JavaScript</li><li>SQL</li></ul></div>
+      <div class="sk"><div class="lab" data-i18n="sk_be">Backend</div><ul>
+        <li>FastAPI · Pydantic</li><li>asyncio · REST · SSE</li><li>PostgreSQL</li></ul></div>
+      <div class="sk"><div class="lab" data-i18n="sk_fe">Frontend</div><ul>
+        <li>React 18 · Vite</li><li>Tailwind · TanStack Query · Zustand</li><li>Plotly · Recharts · D3</li></ul></div>
+      <div class="sk"><div class="lab" data-i18n="sk_ml">ML / Data</div><ul>
+        <li>PyTorch · NumPy · pandas · scikit-learn</li><li data-i18n="sk_ml2">injection-based validation, upper limits</li><li data-i18n="sk_ml3">FDR, robust statistics</li></ul></div>
+      <div class="sk"><div class="lab" data-i18n="sk_ai">AI workflow</div><ul>
+        <li>Claude Code · Cursor</li><li data-i18n="sk_ai2">multi-agent pipelines</li><li data-i18n="sk_ai3">MCP authoring</li></ul></div>
+      <div class="sk"><div class="lab" data-i18n="sk_infra">Infra</div><ul>
+        <li>Docker · Docker Compose</li><li>Linux · nginx</li><li>Git</li></ul></div>
+    </div>
+  </section>
+
+  <!-- ============ CONTACT ============ -->
+  <section id="contact">
+    <h2 class="shead" data-i18n="contact_h">Contact</h2>
+    <div class="contact reveal">
+      <span class="big"><a href="mailto:personalitytg@proton.me">personalitytg@proton.me</a></span>
+    </div>
+    <div class="cmeta">
+      <span>Telegram <a href="https://t.me/psnal">@psnal</a></span>
+      <span>GitHub <a href="https://github.com/personalitytg">github.com/personalitytg</a></span>
+      <span data-i18n="loc">Kyiv, Ukraine</span>
+      <span data-i18n="langs">Ukrainian native · Russian fluent · English reading B1 / speaking A2</span>
+    </div>
+  </section>
+
+  <footer>
+    <span data-i18n="foot">Hand-built — Canvas, scroll-driven CSS, no framework.</span>
+    <button type="button" onclick="window.print()" data-i18n="pdf">Save as PDF ↧</button>
+  </footer>
+</div>
+
+<script>
+(() => {
+  "use strict";
+  const reduce = matchMedia("(prefers-reduced-motion:reduce)").matches;
+  const root = document.documentElement;
+
+  /* ---------- i18n (EN lives in the DOM; RU here) ---------- */
+  const RU = {
+    eyebrow:"Python · Бэкенд / ML · Киев",
+    name:"Александр Неврозов",
+    thesis:"Я строю детекторы для того, у чего нет шаблона.",
+    lede:"Python от начала до конца — от исследовательского ядра до развёрнутого продукта. Бэкенд, машинное обучение и статистика, которая держит результат честным.",
+    figtag:"вживую · детектор совпадений",
+    figcap:"Шесть приборов, почти сплошной шум. Когда они вздрагивают вместе — это сигнал, а одиночный всплеск игнорируется. На этой идее мой пайплайн работает на реальных данных.",
+    statement:"Я довожу работу от исследовательской идеи до того, чем можно пользоваться — <span class=\"q\">бэкенд, интерфейс, деплой и <em>статистическая валидация</em>, которая решает, был ли результат вообще настоящим.</span>",
+    work_h:"Избранные работы",
+    flag_kick:"Флагман · детекция аномалий",
+    flag_sub:"Телескоп для сигналов, которые не объявляют о себе.",
+    flag_body:"CPU-only Python-пайплайн, который ищет во всемирных данных нейтронных мониторов моменты, когда множество независимых приборов отклоняются вместе в спокойном солнечном ветре — не предполагая шаблона источника, только его след. Нулевой результат превращается в калиброванный верхний предел: в данные впрыскиваются известные сигналы и измеряется, что удалось бы поймать. Он вырос в кросс-сетевой поиск по трём несвязанным физикам — нейтронные мониторы, магнитометры INTERMAGNET и GNSS TEC — так что реальный кандидат обязан проявиться сразу во всех трёх, а ложные тревоги гибнут перемножением редкостей.",
+    flag_res:"<b>Два солнечных минимума + два кросс-сетевых года просканированы — везде ноль, каждое реальное событие названо поимённо.</b> Проверено на GLE72 (2017) и форбуш-понижениях · ~15 модульных CLI-стадий · 97 тестов · коннекторы к NMDB, INTERMAGNET, CEDAR&nbsp;Madrigal, OMNI/HAPI, NOAA&nbsp;SWPC, USGS.",
+    c1_l:"Скраббер по обучению LLM на 30M параметров, чекпоинт за чекпоинтом.",
+    c1_s:"PyTorch · React 18 · TypeScript · scikit-learn · D3 · 227 чекпоинтов · 5 видов",
+    c1_k:"↳ демо",
+    c2_l:"Фулстек веб-платформа над научным ядром AMSG.",
+    c2_s:"FastAPI · async-задачи + SSE · React/TS · Plotly · Docker Compose · nginx",
+    c2_k:"↳ github",
+    c3_l:"Софтверные проекты как мультиагентный пайплайн, где человек — оркестратор.",
+    c3_s:"Claude Code · 6 субагентов · слэш-скиллы · guardrail-хуки · MCP",
+    c3_k:"↳ github",
+    c4_l:"Репликация перевёрнутой U-кривой из теории интегрированной информации.",
+    c4_s:"Python · PyTorch · MLP · Φ vs loss · корреляция Спирмена",
+    c4_k:"↳ github",
+    skills_h:"С чем я работаю",
+    sk_lang:"Языки", sk_lang1:"<b>Python</b> (основной)",
+    sk_be:"Бэкенд", sk_fe:"Фронтенд",
+    sk_ml:"ML / данные", sk_ml2:"валидация инъекциями, верхние пределы", sk_ml3:"FDR, робастная статистика",
+    sk_ai:"AI-воркфлоу", sk_ai2:"мультиагентные пайплайны", sk_ai3:"авторство MCP",
+    sk_infra:"Инфра",
+    contact_h:"Контакты",
+    loc:"Киев, Украина",
+    langs:"Украинский — родной · Русский — свободно · Английский — чтение B1 / речь A2",
+    foot:"Собрано вручную — Canvas, scroll-driven CSS, без фреймворков.",
+    pdf:"Сохранить PDF ↧"
+  };
+  const nodes = [...document.querySelectorAll("[data-i18n]")];
+  const EN = {}; nodes.forEach(n => EN[n.dataset.i18n] = n.innerHTML);
+  const themeGlyph = { en:{auto:"◐ auto",light:"☀ light",dark:"☾ dark"},
+                       ru:{auto:"◐ авто",light:"☀ светло",dark:"☾ тёмная"} };
+  const urlLang = new URLSearchParams(location.search).get("lang");
+  let lang = (urlLang === "ru" || urlLang === "en") ? urlLang : (localStorage.getItem("cv-lang") || "en");
+
+  function render(){
+    const dict = lang === "ru" ? RU : EN;
+    nodes.forEach(n => { const v = dict[n.dataset.i18n]; if (v != null) n.innerHTML = v; });
+    root.setAttribute("lang", lang);
+    document.getElementById("langBtn").textContent = lang === "ru" ? "EN" : "RU";
+    document.getElementById("themeBtn").textContent = themeGlyph[lang][mode];
+  }
+  function setLang(l){
+    lang = l; localStorage.setItem("cv-lang", l);
+    if (document.startViewTransition && !reduce) document.startViewTransition(render); else render();
+  }
+  document.getElementById("langBtn").addEventListener("click", () => setLang(lang === "ru" ? "en" : "ru"));
+
+  /* ---------- theme: auto → light → dark ---------- */
+  const modes = ["auto","light","dark"];
+  let mode = localStorage.getItem("cv-theme") || "auto";
+  function applyTheme(){
+    if (mode === "auto") root.removeAttribute("data-theme"); else root.setAttribute("data-theme", mode);
+    document.getElementById("themeBtn").textContent = themeGlyph[lang][mode];
+    if (window.__sig) window.__sig.recolor();
+  }
+  document.getElementById("themeBtn").addEventListener("click", () => {
+    mode = modes[(modes.indexOf(mode)+1)%3]; localStorage.setItem("cv-theme", mode);
+    if (document.startViewTransition && !reduce) document.startViewTransition(applyTheme); else applyTheme();
+  });
+  matchMedia("(prefers-color-scheme:dark)").addEventListener?.("change", () => window.__sig && window.__sig.recolor());
+
+  render(); applyTheme();
+
+  /* ---------- reveal on scroll ---------- */
+  const io = new IntersectionObserver((es) => {
+    es.forEach(e => { if (e.isIntersecting){ e.target.classList.add("in"); io.unobserve(e.target); } });
+  }, {threshold:.16, rootMargin:"0px 0px -8% 0px"});
+  document.querySelectorAll(".reveal").forEach(el => reduce ? el.classList.add("in") : io.observe(el));
+
+  /* ---------- the coincidence figure ---------- */
+  const cv = document.getElementById("sig"), ctx = cv.getContext("2d");
+  const N = 6;
+  let W=0, H=0, dpr=1, cols=0, colW=2.4, buf=[], marker=null, baseY=[], slot=0, amp=0;
+  let inkC="#191d1b", sigC="#bf842a";
+  const rndWalk = new Float32Array(N);
+  let ev = null;
+
+  function recolor(){
+    const cs = getComputedStyle(root);
+    inkC = cs.getPropertyValue("--ink").trim() || inkC;
+    sigC = cs.getPropertyValue("--signal").trim() || sigC;
+    if (reduce) draw();
+  }
+  function resize(){
+    const r = cv.getBoundingClientRect();
+    dpr = Math.min(2, window.devicePixelRatio||1);
+    W = Math.max(280, r.width); H = r.height || 240;
+    cv.width = Math.round(W*dpr); cv.height = Math.round(H*dpr);
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+    cols = Math.ceil(W/colW)+2; slot = (H-24)/N; amp = slot*0.34;
+    baseY = Array.from({length:N},(_,i)=> 12 + slot*(i+0.5));
+    buf = Array.from({length:N},()=> new Float32Array(cols));
+    marker = new Float32Array(cols);
+    for (let s=0;s<cols;s++) step();
+    if (reduce){ injectStatic(Math.floor(cols*0.62)); draw(); }
+  }
+  function step(){
+    for (let i=0;i<N;i++) buf[i].copyWithin(0,1);
+    marker.copyWithin(0,1); marker[cols-1]=0;
+    let bump = new Float32Array(N), mk = 0;
+    if (ev){
+      const t = 1 - ev.left/ev.len, env = Math.sin(Math.PI*Math.min(1,Math.max(0,t)));
+      ev.cols.forEach(i => bump[i] = env*0.92);
+      if (ev.isCo) mk = env;
+      if (--ev.left <= 0) ev = null;
+    }
+    for (let i=0;i<N;i++){
+      rndWalk[i] = rndWalk[i]*0.82 + (Math.random()-0.5)*0.5;
+      let v = rndWalk[i] + bump[i]; if (v>1) v=1; if (v<-1) v=-1;
+      buf[i][cols-1] = v;
+    }
+    marker[cols-1] = mk;
+  }
+  function injectStatic(atCol){
+    const parts = new Set(), k = 5; while(parts.size<k) parts.add(Math.random()*N|0);
+    const half = 6;
+    for (let d=-half; d<=half; d++){
+      const c = atCol+d; if (c<0||c>=cols) continue;
+      const env = Math.sin(Math.PI*(d+half)/(2*half));
+      parts.forEach(i => { let v = buf[i][c] + env*0.92; buf[i][c] = v>1?1:v; });
+      marker[c] = Math.max(marker[c], env);
+    }
+  }
+  function fireEvent(){
+    const isCo = Math.random() < 0.68; const parts = new Set();
+    if (isCo){ const k = 4 + (Math.random()*3|0); while(parts.size<k) parts.add(Math.random()*N|0); }
+    else parts.add(Math.random()*N|0);
+    ev = { cols:parts, left: 10 + (Math.random()*6|0), len: 16, isCo };
+  }
+  function draw(){
+    ctx.clearRect(0,0,W,H);
+    ctx.lineWidth = 1.25; ctx.lineJoin="round"; ctx.lineCap="round";
+    for (let i=0;i<N;i++){
+      ctx.globalAlpha = 0.5; ctx.strokeStyle = inkC; ctx.beginPath();
+      for (let c=0;c<cols;c++){ const x=c*colW, y=baseY[i]-buf[i][c]*amp; c?ctx.lineTo(x,y):ctx.moveTo(x,y); }
+      ctx.stroke();
+    }
+    ctx.globalAlpha = 1;
+    let recent = -1;
+    for (let c=0;c<cols;c++){
+      const mk = marker[c]; if (mk<=0.02) continue;
+      const x = c*colW;
+      const g = ctx.createLinearGradient(x-9,0,x+9,0);
+      g.addColorStop(0,"transparent"); g.addColorStop(.5,sigC); g.addColorStop(1,"transparent");
+      ctx.globalAlpha = 0.12*mk; ctx.fillStyle = g; ctx.fillRect(x-9, 6, 18, H-12);
+      ctx.fillStyle = sigC;
+      for (let i=0;i<N;i++){ if (buf[i][c] > 0.4){ const y=baseY[i]-buf[i][c]*amp;
+        ctx.globalAlpha = mk; ctx.beginPath(); ctx.arc(x,y,2.2,0,7); ctx.fill(); } }
+      ctx.globalAlpha = 0.85*mk; ctx.strokeStyle = sigC; ctx.lineWidth = 1.4;
+      ctx.beginPath(); ctx.moveTo(x,6); ctx.lineTo(x,15); ctx.stroke();
+      if (mk>0.5 && x>66 && x<W-66) recent = x;
+    }
+    ctx.globalAlpha = 1;
+    if (recent>0){ ctx.font = "500 10.5px 'Spline Sans Mono', monospace"; ctx.fillStyle = sigC;
+      ctx.textAlign="center"; ctx.fillText("coincidence", recent, 12); }
+  }
+  let acc=0, last=0, sinceEvent=0, nextEvent=1400;
+  function loop(ts){
+    if (!last) last = ts; const dt = ts-last; last = ts;
+    acc += dt; sinceEvent += dt;
+    if (sinceEvent > nextEvent){ fireEvent(); sinceEvent = 0; nextEvent = 4800 + Math.random()*4600; }
+    while (acc >= 40){ step(); acc -= 40; }
+    draw(); requestAnimationFrame(loop);
+  }
+
+  window.__sig = { recolor };
+  new ResizeObserver(() => resize()).observe(cv);
+  resize(); recolor();
+  if (!reduce) requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>
